@@ -2,10 +2,9 @@ package com.universidad.controller;
 
 import com.universidad.model.Materia;
 import com.universidad.service.IMateriaService;
+import com.universidad.dto.MateriaDTO;
 
 import jakarta.transaction.Transactional;
-
-import com.universidad.dto.MateriaDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,27 +32,30 @@ public class MateriaController {
         logger.info("[MATERIA] Inicio obtenerTodasLasMaterias: {}", inicio);
         List<MateriaDTO> result = materiaService.obtenerTodasLasMaterias();
         long fin = System.currentTimeMillis();
-        logger.info("[MATERIA] Fin obtenerTodasLasMaterias: {} (Duracion: {} ms)", fin, (fin-inicio));
+        logger.info("[MATERIA] Fin obtenerTodasLasMaterias: {} (Duración: {} ms)", fin, (fin - inicio));
         return ResponseEntity.ok(result);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<MateriaDTO> obtenerMateriaPorId(@PathVariable Long id) {
         long inicio = System.currentTimeMillis();
-        logger.info("[MATERIA] Inicio obtenerMateriaPorId: {}", inicio);
+        logger.info("[MATERIA] Inicio obtenerMateriaPorId: ID={}", id);
         MateriaDTO materia = materiaService.obtenerMateriaPorId(id);
         long fin = System.currentTimeMillis();
-        logger.info("[MATERIA] Fin obtenerMateriaPorId: {} (Duracion: {} ms)", fin, (fin-inicio));
         if (materia == null) {
+            logger.warn("[MATERIA] Materia no encontrada: ID={}", id);
             return ResponseEntity.notFound().build();
         }
+        logger.info("[MATERIA] Fin obtenerMateriaPorId: ID={} (Duración: {} ms)", id, (fin - inicio));
         return ResponseEntity.ok(materia);
     }
 
     @GetMapping("/codigo/{codigoUnico}")
     public ResponseEntity<MateriaDTO> obtenerMateriaPorCodigoUnico(@PathVariable String codigoUnico) {
+        logger.info("[MATERIA] Buscar por código único: {}", codigoUnico);
         MateriaDTO materia = materiaService.obtenerMateriaPorCodigoUnico(codigoUnico);
         if (materia == null) {
+            logger.warn("[MATERIA] No encontrada por código único: {}", codigoUnico);
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(materia);
@@ -61,39 +63,45 @@ public class MateriaController {
 
     @PostMapping
     public ResponseEntity<MateriaDTO> crearMateria(@RequestBody MateriaDTO materia) {
-        //MateriaDTO materiaDTO = new MateriaDTO(materia.getId(), materia.getNombre(), materia.getCodigoUnico());
+        logger.info("[MATERIA] Inicio crearMateria: código={}", materia.getCodigoUnico());
         MateriaDTO nueva = materiaService.crearMateria(materia);
+        logger.info("[MATERIA] Fin crearMateria: ID={} código={}", nueva.getId(), nueva.getCodigoUnico());
         return ResponseEntity.status(HttpStatus.CREATED).body(nueva);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<MateriaDTO> actualizarMateria(@PathVariable Long id, @RequestBody MateriaDTO materia) {
-        //MateriaDTO materiaDTO = new MateriaDTO(materia.getId(), materia.getNombreMateria(), materia.getCodigoUnico());
+        logger.info("[MATERIA] Inicio actualizarMateria: ID={}", id);
         MateriaDTO actualizadaDTO = materiaService.actualizarMateria(id, materia);
-        //Materia actualizada = new Materia(actualizadaDTO.getId(), actualizadaDTO.getNombre(), actualizadaDTO.getCodigoUnico());
+        logger.info("[MATERIA] Fin actualizarMateria: ID={}", id);
         return ResponseEntity.ok(actualizadaDTO);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarMateria(@PathVariable Long id) {
+        logger.info("[MATERIA] Eliminar materia: ID={}", id);
         materiaService.eliminarMateria(id);
+        logger.info("[MATERIA] Materia eliminada: ID={}", id);
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/formaria-circulo/{materiaId}/{prerequisitoId}") // Endpoint para verificar si una materia formaría un círculo con un prerequisito
-    @Transactional // Anotación que indica que este método debe ejecutarse dentro de una transacción
+    @GetMapping("/formaria-circulo/{materiaId}/{prerequisitoId}")
+    @Transactional
     public ResponseEntity<Boolean> formariaCirculo(@PathVariable Long materiaId, @PathVariable Long prerequisitoId) {
-        MateriaDTO materiaDTO = materiaService.obtenerMateriaPorId(materiaId); // Obtiene la materia por su ID
-        if (materiaDTO == null) { // Verifica si la materia existe
+        logger.info("[MATERIA] Verificando ciclo: materiaId={} prerequisitoId={}", materiaId, prerequisitoId);
+        MateriaDTO materiaDTO = materiaService.obtenerMateriaPorId(materiaId);
+        if (materiaDTO == null) {
+            logger.warn("[MATERIA] Materia no encontrada al verificar ciclo: ID={}", materiaId);
             return ResponseEntity.notFound().build();
         }
+
         Materia materia = new Materia(materiaDTO.getId(), materiaDTO.getNombreMateria(), materiaDTO.getCodigoUnico());
-        // Crea una nueva instancia de Materia con los datos obtenidos
-        // Verifica si agregar el prerequisito formaría un círculo
-        boolean circulo = materia.formariaCirculo(prerequisitoId); // Llama al método formariaCirculo de la clase Materia
-        if (circulo) { // Si formaría un círculo, retorna un error 400 Bad Request
-            return ResponseEntity.badRequest().body(circulo);
+        boolean circulo = materia.formariaCirculo(prerequisitoId);
+        if (circulo) {
+            logger.warn("[MATERIA] Ciclo detectado al intentar agregar prerequisitoId={} a materiaId={}", prerequisitoId, materiaId);
+            return ResponseEntity.badRequest().body(true);
         }
-        return ResponseEntity.ok(circulo);
+        logger.info("[MATERIA] No se detectó ciclo al agregar prerequisitoId={} a materiaId={}", prerequisitoId, materiaId);
+        return ResponseEntity.ok(false);
     }
 }

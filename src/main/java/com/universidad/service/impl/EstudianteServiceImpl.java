@@ -118,8 +118,10 @@ public class EstudianteServiceImpl implements IEstudianteService { // Define la 
         Estudiante estudianteInactivo = estudianteRepository.save(estudianteExistente); // Guarda el estudiante inactivo en la base de datos
         return convertToDTO(estudianteInactivo); // Convierte el Estudiante inactivo a EstudianteDTO y lo retorna
     }
+    
 
     @Transactional
+    @Cacheable(value = "estudianteConBloqueo", key = "#id")
     public Estudiante obtenerEstudianteConBloqueo(Long id) {
         Estudiante est = estudianteRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Estudiante no encontrado"));
@@ -167,5 +169,11 @@ public class EstudianteServiceImpl implements IEstudianteService { // Define la 
                 .fechaBaja(estudianteDTO.getFechaBaja()) // Asigna la fecha de baja (puede ser null si no se desea mostrar)
                 .motivoBaja(estudianteDTO.getMotivoBaja()) // Asigna el motivo de baja (puede ser null si no se desea mostrar)
                 .build(); // Construye el objeto Estudiante
+    }
+
+    @Override
+    public EstudianteDTO eliminaEstudiante(Long id, EstudianteDTO estudianteDTO) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'eliminaEstudiante'");
     }
 }

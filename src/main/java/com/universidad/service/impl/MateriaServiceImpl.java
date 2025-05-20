@@ -19,7 +19,6 @@ public class MateriaServiceImpl implements IMateriaService {
     @Autowired
     private MateriaRepository materiaRepository;
 
-    // Método utilitario para mapear Materia a MateriaDTO
     private MateriaDTO mapToDTO(Materia materia) {
         if (materia == null) return null;
         return MateriaDTO.builder()
@@ -28,9 +27,9 @@ public class MateriaServiceImpl implements IMateriaService {
                 .codigoUnico(materia.getCodigoUnico())
                 .creditos(materia.getCreditos())
                 .prerequisitos(materia.getPrerequisitos() != null ?
-                    materia.getPrerequisitos().stream().map(Materia::getId).collect(Collectors.toList()) : null)
+                        materia.getPrerequisitos().stream().map(Materia::getId).collect(Collectors.toList()) : null)
                 .esPrerequisitoDe(materia.getEsPrerequisitoDe() != null ?
-                    materia.getEsPrerequisitoDe().stream().map(Materia::getId).collect(Collectors.toList()) : null)
+                        materia.getEsPrerequisitoDe().stream().map(Materia::getId).collect(Collectors.toList()) : null)
                 .build();
     }
 
@@ -61,7 +60,6 @@ public class MateriaServiceImpl implements IMateriaService {
         materia.setNombreMateria(materiaDTO.getNombreMateria());
         materia.setCodigoUnico(materiaDTO.getCodigoUnico());
         materia.setCreditos(materiaDTO.getCreditos());
-        // Map other fields as necessary
         Materia savedMateria = materiaRepository.save(materia);
         return mapToDTO(savedMateria);
     }
@@ -70,17 +68,17 @@ public class MateriaServiceImpl implements IMateriaService {
     @CachePut(value = "materia", key = "#id")
     @CacheEvict(value = "materias", allEntries = true)
     public MateriaDTO actualizarMateria(Long id, MateriaDTO materiaDTO) {
-        Materia materia = materiaRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Materia not found"));
+        Materia materia = materiaRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Materia not found"));
         materia.setNombreMateria(materiaDTO.getNombreMateria());
         materia.setCodigoUnico(materiaDTO.getCodigoUnico());
         materia.setCreditos(materiaDTO.getCreditos());
-        // Map other fields as necessary
         Materia updatedMateria = materiaRepository.save(materia);
         return mapToDTO(updatedMateria);
     }
 
     @Override
-    @CacheEvict(value = {"materia", "materias"}, allEntries = true)
+    @CacheEvict(value = {"materias", "materia"}, allEntries = true)
     public void eliminarMateria(Long id) {
         materiaRepository.deleteById(id);
     }
